@@ -1,12 +1,21 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import PageShell from '../components/PageShell'
+import WaterRing from '../components/WaterRing'
+import WaterHistory from '../components/WaterHistory'
+import WeighInCard from '../components/WeighInCard'
 import { db } from '../db/db'
+import { toLocalDateString } from '../lib/date'
 
 export default function Today() {
   const profile = useLiveQuery(() => db.profile.get(1))
   const targets = useLiveQuery(() => db.targets.orderBy('date').last())
+  const todayWaterOz = useLiveQuery(async () => {
+    const date = toLocalDateString(new Date())
+    const entries = await db.water.where('date').equals(date).toArray()
+    return entries.reduce((sum, e) => sum + e.oz, 0)
+  }, [])
 
-  if (!targets || !profile) {
+  if (!targets || !profile || todayWaterOz === undefined) {
     return (
       <PageShell title="Today">
         <p>Loading your targets…</p>
@@ -14,9 +23,32 @@ export default function Today() {
     )
   }
 
+  const waterPct = targets.waterOz > 0 ? todayWaterOz / targets.waterOz : 0
+  const showNudge = new Date().getHours() >= 15 && waterPct < 0.4
+
   return (
     <PageShell title="Today">
       <div className="space-y-4">
+        {showNudge && (
+          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-300">
+            Only {Math.round(waterPct * 100)}% of today's water target so far — worth a few glasses this
+            afternoon.
+          </div>
+        )}
+
+        <Card>
+          <CardTitle>Water</CardTitle>
+          <WaterRing oz={todayWaterOz} targetOz={targets.waterOz} glassOz={profile.glassOz} />
+          <div className="mt-4">
+            <WaterHistory />
+          </div>
+        </Card>
+
+        <Card>
+          <CardTitle>Weigh-in</CardTitle>
+          <WeighInCard />
+        </Card>
+
         <Card>
           <CardTitle>Calories</CardTitle>
           <div className="text-3xl font-semibold text-slate-50">{targets.calories} kcal</div>
@@ -44,13 +76,6 @@ export default function Today() {
           <p className="mt-2 text-xs text-slate-500">
             Added sugar under {targets.addedSugarLimitG}g · sodium under {targets.sodiumLimitMg}mg
           </p>
-        </Card>
-
-        <Card>
-          <CardTitle>Water</CardTitle>
-          <div className="text-2xl font-semibold text-slate-50">
-            {targets.waterOz} oz <span className="text-sm font-normal text-slate-400">({targets.waterGlasses} glasses)</span>
-          </div>
         </Card>
 
         <Card>

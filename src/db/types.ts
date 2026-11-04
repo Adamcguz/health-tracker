@@ -30,3 +30,17 @@ export interface TargetsRecord {
   stepsDay: number
   flooredApplied: boolean
 }
+
+export interface WeighIn {
+  id?: number
+  date: string // YYYY-MM-DD
+  weightLb: number
+  trendWeightLb: number
+}
+
+export interface WaterEntry {
+  id?: number
+  date: string // YYYY-MM-DD
+  timestamp: number // epoch ms, for ordering/undo within a day
+  oz: number
+}

@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Routes, Route } from 'react-router-dom'
 import BottomNav from './components/BottomNav'
+import WaterFab from './components/WaterFab'
 import Today from './pages/Today'
 import Food from './pages/Food'
 import Workouts from './pages/Workouts'
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/summary" element={<Summary />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
+      <WaterFab />
       <BottomNav />
     </div>
   )

@@ -1,4 +1,5 @@
 import type { ActivityLevel, FoodGroupServings, Pace, Sex } from '../lib/config'
+import type { CardioIntensity } from '../lib/activity'
 
 export interface Profile {
   id: 1 // singleton row
@@ -43,4 +44,35 @@ export interface WaterEntry {
   date: string // YYYY-MM-DD
   timestamp: number // epoch ms, for ordering/undo within a day
   oz: number
+}
+
+export interface StepsEntry {
+  id?: number
+  date: string // YYYY-MM-DD, one entry per day
+  steps: number
+}
+
+export interface CardioEntry {
+  id?: number
+  date: string
+  type: string
+  minutes: number
+  intensity: CardioIntensity
+}
+
+export interface StrengthSet {
+  id?: number
+  date: string
+  sessionId: string
+  exercise: string
+  setIndex: number
+  weightLb: number
+  reps: number
+  e1RM: number
+}
+
+export interface Routine {
+  id?: number
+  name: string
+  exercises: string[]
 }

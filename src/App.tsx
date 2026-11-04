@@ -5,6 +5,7 @@ import WaterFab from './components/WaterFab'
 import Today from './pages/Today'
 import Food from './pages/Food'
 import Workouts from './pages/Workouts'
+import ExerciseDetail from './pages/ExerciseDetail'
 import Summary from './pages/Summary'
 import Settings from './pages/Settings'
 import Onboarding from './pages/Onboarding'
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/" element={<Today />} />
         <Route path="/food" element={<Food />} />
         <Route path="/workouts" element={<Workouts />} />
+        <Route path="/workouts/:exercise" element={<ExerciseDetail />} />
         <Route path="/summary" element={<Summary />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>

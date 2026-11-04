@@ -3,13 +3,26 @@ import { computeDailyTargets } from '../lib/targets'
 import { computeTrendWeight } from '../lib/trend'
 import { toLocalDateString } from '../lib/date'
 import { ageFromBirthDate } from '../lib/date'
-import type { Profile, TargetsRecord, WaterEntry, WeighIn } from './types'
+import type {
+  CardioEntry,
+  Profile,
+  Routine,
+  StepsEntry,
+  StrengthSet,
+  TargetsRecord,
+  WaterEntry,
+  WeighIn,
+} from './types'
 
 export class HealthTrackerDB extends Dexie {
   profile!: Table<Profile, number>
   targets!: Table<TargetsRecord, number>
   weighIns!: Table<WeighIn, number>
   water!: Table<WaterEntry, number>
+  steps!: Table<StepsEntry, number>
+  cardio!: Table<CardioEntry, number>
+  strengthSets!: Table<StrengthSet, number>
+  routines!: Table<Routine, number>
 
   constructor() {
     super('health-tracker')
@@ -22,6 +35,16 @@ export class HealthTrackerDB extends Dexie {
       targets: '++id, date',
       weighIns: '++id, date',
       water: '++id, date, timestamp',
+    })
+    this.version(3).stores({
+      profile: 'id',
+      targets: '++id, date',
+      weighIns: '++id, date',
+      water: '++id, date, timestamp',
+      steps: '++id, &date',
+      cardio: '++id, date',
+      strengthSets: '++id, date, sessionId, exercise',
+      routines: '++id, &name',
     })
   }
 }

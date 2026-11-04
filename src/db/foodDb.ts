@@ -46,10 +46,12 @@ export async function getFoodsLibrary(): Promise<FoodLibraryItem[]> {
 }
 
 /**
- * Saves a meal entry. Non-snack slots upsert the single entry for today;
- * snacks always add a new entry since several are allowed per day.
+ * Saves a meal entry. With `id`, updates that exact entry (used to edit an
+ * existing snack). Otherwise, non-snack slots upsert the single entry for
+ * today; snacks add a new entry since several are allowed per day.
  */
 export async function saveMeal(params: {
+  id?: number
   slot: MealSlot
   rawText: string
   status: MealStatus
@@ -65,7 +67,9 @@ export async function saveMeal(params: {
     loggedAt: Date.now(),
   }
 
-  if (params.slot === 'snack') {
+  if (params.id !== undefined) {
+    await db.meals.put({ ...entry, id: params.id })
+  } else if (params.slot === 'snack') {
     await db.meals.add(entry)
   } else {
     const existing = await db.meals.where({ date, slot: params.slot }).first()

@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
-import { getFoodsLibrary, getYesterdaySlotItems, logAnalysisCall, saveMeal } from '../db/foodDb'
+import { deleteMeal, getFoodsLibrary, getYesterdaySlotItems, logAnalysisCall, saveMeal } from '../db/foodDb'
 import { analyzeMealText, AnalysisRequestError, WorkerNotConfiguredError } from '../lib/mealAnalysis'
 import type { FoodLibraryItem, MealEntry, MealItem, MealSlot } from '../db/types'
 
@@ -40,7 +40,7 @@ export default function MealEntryPanel({
       }
     } catch (err) {
       if (err instanceof WorkerNotConfiguredError || err instanceof AnalysisRequestError || err instanceof TypeError) {
-        await saveMeal({ slot, rawText: text, status: 'needs-analysis', items: [] })
+        await saveMeal({ id: existingEntry?.id, slot, rawText: text, status: 'needs-analysis', items: [] })
         setNotice('Saved as text — AI analysis isn\'t set up or reachable yet. You can re-analyze later.')
         setTimeout(onDone, 1500)
       } else {
@@ -86,12 +86,19 @@ export default function MealEntryPanel({
   }
 
   async function handleSave() {
-    await saveMeal({ slot, rawText: rawText || '(saved meal)', status: 'logged', items })
+    await saveMeal({ id: existingEntry?.id, slot, rawText: rawText || '(saved meal)', status: 'logged', items })
     onDone()
   }
 
   async function handleSkip() {
-    await saveMeal({ slot, rawText: '', status: 'skipped', items: [] })
+    await saveMeal({ id: existingEntry?.id, slot, rawText: '', status: 'skipped', items: [] })
+    onDone()
+  }
+
+  async function handleDelete() {
+    if (!existingEntry?.id) return
+    if (!window.confirm('Delete this entry?')) return
+    await deleteMeal(existingEntry.id)
     onDone()
   }
 
@@ -163,9 +170,16 @@ export default function MealEntryPanel({
           </div>
         )}
 
-        <button type="button" onClick={handleSave} className="w-full rounded-lg bg-emerald-500 py-2 text-sm font-medium text-slate-950">
-          Save
-        </button>
+        <div className="flex gap-2">
+          <button type="button" onClick={handleSave} className="flex-1 rounded-lg bg-emerald-500 py-2 text-sm font-medium text-slate-950">
+            Save
+          </button>
+          {existingEntry?.id !== undefined && (
+            <button type="button" onClick={() => void handleDelete()} className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-red-400">
+              Delete
+            </button>
+          )}
+        </div>
       </div>
     )
   }
@@ -208,6 +222,11 @@ export default function MealEntryPanel({
         <button type="button" onClick={() => void handleSkip()} className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-400">
           Skipped this meal
         </button>
+        {existingEntry?.id !== undefined && (
+          <button type="button" onClick={() => void handleDelete()} className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-red-400">
+            Delete
+          </button>
+        )}
       </div>
     </div>
   )

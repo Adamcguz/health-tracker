@@ -6,6 +6,7 @@ import MealEntryPanel from '../components/MealEntryPanel'
 import EndOfDayReport from '../components/EndOfDayReport'
 import { db } from '../db/db'
 import { getTodayMeals } from '../db/foodDb'
+import { sumCalories } from '../lib/nutrition'
 import type { MealSlot } from '../db/types'
 
 const MAIN_SLOTS: MealSlot[] = ['breakfast', 'lunch', 'dinner']
@@ -24,6 +25,7 @@ export default function Food() {
   const profile = useLiveQuery(() => db.profile.get(1))
   const todayMeals = useLiveQuery(() => getTodayMeals(), [])
   const [addingSnack, setAddingSnack] = useState(false)
+  const [editingSnackId, setEditingSnackId] = useState<number | null>(null)
 
   if (!profile || !todayMeals) {
     return (
@@ -53,13 +55,29 @@ export default function Food() {
         <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
           <h2 className="mb-2 text-sm font-medium text-slate-100">Snacks</h2>
           {snackEntries.length === 0 && <p className="text-xs text-slate-400">None logged yet today.</p>}
-          <ul className="mb-2 space-y-1">
+          <div className="mb-2 space-y-1">
             {snackEntries.map((s) => (
-              <li key={s.id} className="text-sm text-slate-300">
-                {s.rawText || '(snack)'}
-              </li>
+              <div key={s.id}>
+                <button
+                  type="button"
+                  onClick={() => setEditingSnackId(editingSnackId === s.id ? null : (s.id ?? null))}
+                  className="flex w-full items-center justify-between rounded-lg border border-slate-800 px-2 py-1.5 text-left text-sm"
+                >
+                  <span className="text-slate-300">{s.rawText || '(snack)'}</span>
+                  <span className="text-xs text-slate-500">
+                    {s.status === 'logged'
+                      ? `${sumCalories(s.items)} kcal`
+                      : s.status === 'needs-analysis'
+                        ? 'Needs analysis'
+                        : 'Skipped'}
+                  </span>
+                </button>
+                {editingSnackId === s.id && (
+                  <MealEntryPanel slot="snack" existingEntry={s} onDone={() => setEditingSnackId(null)} />
+                )}
+              </div>
             ))}
-          </ul>
+          </div>
           {addingSnack ? (
             <MealEntryPanel slot="snack" onDone={() => setAddingSnack(false)} />
           ) : (

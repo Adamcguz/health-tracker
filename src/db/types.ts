@@ -14,6 +14,8 @@ export interface Profile {
   stepsTarget: number
   reminderTimes: { breakfast: string; lunch: string; dinner: string; snacks: string }
   createdAt: string
+  /** Set once at onboarding from the chosen pace; stays fixed as a "ghost marker" even as the live projection moves. */
+  plannedFinishDate: string | null
 }
 
 export interface TargetsRecord {

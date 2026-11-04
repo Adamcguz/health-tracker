@@ -1,7 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import PageShell from '../components/PageShell'
 import { db, saveProfile, saveTargets } from '../db/db'
+import { exportBackup, importBackup, isBackupData } from '../db/backupDb'
 import { getMonthAnalysisCount } from '../db/foodDb'
 import { ACTIVITY_LEVELS, type ActivityLevel, type Pace, type Sex } from '../lib/config'
 import { ageFromBirthDate, toLocalDateString } from '../lib/date'
@@ -11,6 +12,8 @@ import { computeDailyTargets } from '../lib/targets'
 export default function Settings() {
   const profile = useLiveQuery(() => db.profile.get(1))
   const monthAnalysisCount = useLiveQuery(() => getMonthAnalysisCount(), [])
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [backupStatus, setBackupStatus] = useState<string | null>(null)
 
   const [heightIn, setHeightIn] = useState(0)
   const [currentWeightLb, setCurrentWeightLb] = useState(0)
@@ -58,6 +61,7 @@ export default function Settings() {
       stepsTarget,
       reminderTimes: profile!.reminderTimes,
       createdAt: profile!.createdAt,
+      plannedFinishDate: profile!.plannedFinishDate,
     })
 
     const targets = computeDailyTargets({
@@ -75,6 +79,44 @@ export default function Settings() {
 
     setStatus('saved')
     setTimeout(() => setStatus('idle'), 2000)
+  }
+
+  async function handleExport() {
+    const data = await exportBackup()
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `health-tracker-backup-${toLocalDateString(new Date())}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    setBackupStatus('Backup downloaded.')
+    setTimeout(() => setBackupStatus(null), 3000)
+  }
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    const text = await file.text()
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(text)
+    } catch {
+      setBackupStatus('That file is not valid JSON.')
+      return
+    }
+    if (!isBackupData(parsed)) {
+      setBackupStatus('That file does not look like a Health Tracker backup.')
+      return
+    }
+    if (!window.confirm('This replaces all data currently on this device with the backup. Continue?')) {
+      return
+    }
+    await importBackup(parsed)
+    setBackupStatus('Backup restored. Reloading…')
+    setTimeout(() => window.location.reload(), 1000)
   }
 
   return (
@@ -153,6 +195,28 @@ export default function Settings() {
       <div className="mt-6 rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-400">
         <p>AI food analysis: {isWorkerConfigured() ? 'connected' : 'not set up yet'}</p>
         <p>{monthAnalysisCount ?? 0} analyses this month</p>
+      </div>
+
+      <div className="mt-6">
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Backup</h2>
+        <p className="mb-2 text-xs text-slate-500">
+          iOS can clear web-app storage, so back up regularly. A backup is a JSON file you can keep
+          anywhere (email, iCloud Drive, etc.) and restore from on this or another device.
+        </p>
+        <div className="flex gap-2">
+          <button type="button" onClick={handleExport} className="flex-1 rounded-lg border border-slate-700 py-2 text-sm text-slate-200">
+            Export backup
+          </button>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 rounded-lg border border-slate-700 py-2 text-sm text-slate-200"
+          >
+            Restore backup
+          </button>
+          <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleImportFile} />
+        </div>
+        {backupStatus && <p className="mt-2 text-xs text-emerald-400">{backupStatus}</p>}
       </div>
 
       <p className="mt-4 text-xs text-slate-500">

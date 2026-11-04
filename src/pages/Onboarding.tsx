@@ -34,6 +34,7 @@ export default function Onboarding() {
 
   async function handleFinish() {
     setSaving(true)
+    const chosenOption = options.find((o) => o.pace === pace)
     const profile: Omit<Profile, 'id'> = {
       heightIn,
       currentWeightLb,
@@ -46,6 +47,7 @@ export default function Onboarding() {
       stepsTarget: DEFAULT_STEPS_TARGET,
       reminderTimes: { breakfast: '09:00', lunch: '13:00', dinner: '19:00', snacks: '22:00' },
       createdAt: toLocalDateString(new Date()),
+      plannedFinishDate: chosenOption?.finishDate ?? null,
     }
     await saveProfile(profile)
 

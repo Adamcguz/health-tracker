@@ -94,3 +94,18 @@ export async function getMonthAnalysisCount(): Promise<number> {
   const all = await db.analysisLog.toArray()
   return all.filter((e) => e.date.startsWith(prefix)).length
 }
+
+/** Calories actually logged ("logged" status only) per day, most recent `days` days including today. */
+export async function getDailyCaloriesForRange(days: number): Promise<{ date: string; calories: number }[]> {
+  const results: { date: string; calories: number }[] = []
+  for (let i = days - 1; i >= 0; i--) {
+    const date = toLocalDateString(addDays(new Date(), -i))
+    const meals = await getMealsForDate(date)
+    const calories = meals
+      .filter((m) => m.status === 'logged')
+      .flatMap((m) => m.items)
+      .reduce((sum, item) => sum + item.kcal, 0)
+    results.push({ date, calories })
+  }
+  return results
+}

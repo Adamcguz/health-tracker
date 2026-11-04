@@ -2,12 +2,15 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import PageShell from '../components/PageShell'
 import { db, saveProfile, saveTargets } from '../db/db'
+import { getMonthAnalysisCount } from '../db/foodDb'
 import { ACTIVITY_LEVELS, type ActivityLevel, type Pace, type Sex } from '../lib/config'
 import { ageFromBirthDate, toLocalDateString } from '../lib/date'
+import { isWorkerConfigured } from '../lib/mealAnalysis'
 import { computeDailyTargets } from '../lib/targets'
 
 export default function Settings() {
   const profile = useLiveQuery(() => db.profile.get(1))
+  const monthAnalysisCount = useLiveQuery(() => getMonthAnalysisCount(), [])
 
   const [heightIn, setHeightIn] = useState(0)
   const [currentWeightLb, setCurrentWeightLb] = useState(0)
@@ -146,6 +149,11 @@ export default function Settings() {
       >
         {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved ✓' : 'Save and recalculate targets'}
       </button>
+
+      <div className="mt-6 rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-400">
+        <p>AI food analysis: {isWorkerConfigured() ? 'connected' : 'not set up yet'}</p>
+        <p>{monthAnalysisCount ?? 0} analyses this month</p>
+      </div>
 
       <p className="mt-4 text-xs text-slate-500">
         Targets are general estimates, not medical advice — check with a doctor before big diet or

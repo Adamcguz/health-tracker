@@ -76,3 +76,52 @@ export interface Routine {
   name: string
   exercises: string[]
 }
+
+export interface FoodGroupContribution {
+  fruitCups: number
+  vegetableCups: number
+  grainsOzEq: number
+  grainsWholeOzEq: number
+  proteinOzEq: number
+  dairyCups: number
+}
+
+export type NutritionFlag = 'added-sugar' | 'high-sodium'
+
+export interface MealItem {
+  name: string
+  portion: string
+  kcal: number
+  proteinG: number
+  groups: FoodGroupContribution
+  flags: NutritionFlag[]
+}
+
+export type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack'
+export type MealStatus = 'logged' | 'skipped' | 'needs-analysis'
+
+export interface MealEntry {
+  id?: number
+  date: string
+  slot: MealSlot
+  rawText: string
+  status: MealStatus
+  items: MealItem[]
+  loggedAt: number
+}
+
+export interface FoodLibraryItem {
+  id?: number
+  name: string
+  portion: string
+  kcal: number
+  proteinG: number
+  groups: FoodGroupContribution
+  timesUsed: number
+}
+
+/** One row per successful AI analysis call, for the Settings monthly count / $5 cost cap. */
+export interface AnalysisLogEntry {
+  id?: number
+  date: string // YYYY-MM-DD
+}

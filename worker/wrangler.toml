@@ -12,4 +12,4 @@ DAILY_ANALYSIS_LIMIT = "30"
 # the id it prints here.
 [[kv_namespaces]]
 binding = "RATE_LIMIT"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "524778e8385b4a23a366aa8bd59de0e6"

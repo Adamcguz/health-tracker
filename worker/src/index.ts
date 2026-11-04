@@ -118,7 +118,7 @@ export default {
         },
         body: JSON.stringify({
           model: MODEL,
-          max_tokens: 1024,
+          max_tokens: 2048,
           system: SYSTEM_PROMPT,
           messages: [{ role: 'user', content: text }],
         }),
@@ -129,14 +129,30 @@ export default {
         return jsonResponse({ error: `Claude API error: ${errText}` }, env, 502)
       }
 
-      const data = (await anthropicResponse.json()) as { content: { type: string; text?: string }[] }
+      const data = (await anthropicResponse.json()) as {
+        content: { type: string; text?: string }[]
+        stop_reason?: string
+      }
       const textBlock = data.content.find((b) => b.type === 'text')
       if (!textBlock?.text) {
         return jsonResponse({ error: 'No text in Claude response' }, env, 502)
       }
 
-      const parsed = extractJson(textBlock.text)
-      return jsonResponse(parsed, env)
+      try {
+        const parsed = extractJson(textBlock.text)
+        return jsonResponse(parsed, env)
+      } catch (parseErr) {
+        return jsonResponse(
+          {
+            error: `Could not parse Claude's response as JSON: ${(parseErr as Error).message}`,
+            stopReason: data.stop_reason,
+            rawTextLength: textBlock.text.length,
+            rawTextSample: textBlock.text.slice(0, 500),
+          },
+          env,
+          502,
+        )
+      }
     } catch (err) {
       return jsonResponse({ error: `Analysis failed: ${(err as Error).message}` }, env, 500)
     }
